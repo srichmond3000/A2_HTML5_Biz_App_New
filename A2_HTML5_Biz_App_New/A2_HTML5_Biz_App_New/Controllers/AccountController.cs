@@ -5,10 +5,11 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using A2_HTML5_Biz_App_New.Models;
 using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
-using A2_HTML5_Biz_App_New.Models;
 
 namespace A2_HTML5_Biz_App_New.Controllers
 {
@@ -17,9 +18,11 @@ namespace A2_HTML5_Biz_App_New.Controllers
     {
         private ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
+        private ApplicationDbContext _ctx;
 
         public AccountController()
         {
+            _ctx = new ApplicationDbContext();
         }
 
         public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
@@ -139,6 +142,7 @@ namespace A2_HTML5_Biz_App_New.Controllers
         [AllowAnonymous]
         public ActionResult Register()
         {
+            ViewBag.Name = new SelectList(_ctx.Roles.ToList().Skip(1), "Name", "Name");
             return View();
         }
 
@@ -155,8 +159,11 @@ namespace A2_HTML5_Biz_App_New.Controllers
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
-                    
+                    await this.UserManager.AddToRoleAsync(user.Id, model.Name);
+
+                    await SignInAsync(user, isPersistent: false);
+                    //await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
+
                     // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=320771
                     // Send an email with this link
                     // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
@@ -165,7 +172,12 @@ namespace A2_HTML5_Biz_App_New.Controllers
 
                     return RedirectToAction("Index", "Home");
                 }
-                AddErrors(result);
+                else
+                {
+                    AddErrors(result);
+                }
+
+                return View(model);
             }
 
             // If we got this far, something failed, redisplay form
@@ -421,6 +433,13 @@ namespace A2_HTML5_Biz_App_New.Controllers
             }
 
             base.Dispose(disposing);
+        }
+
+        private async Task SignInAsync(ApplicationUser user, bool isPersistent)
+        {
+            AuthenticationManager.SignOut(DefaultAuthenticationTypes.ExternalCookie);
+            var identity = await UserManager.CreateIdentityAsync(user, DefaultAuthenticationTypes.ApplicationCookie);
+            AuthenticationManager.SignIn(new AuthenticationProperties() { IsPersistent = isPersistent }, identity);
         }
 
         #region Helpers

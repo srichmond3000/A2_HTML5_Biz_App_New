@@ -8,7 +8,7 @@ using Microsoft.AspNet.Identity.EntityFramework;
 
 namespace A2_HTML5_Biz_App_New.Controllers
 {
-    [Authorize(Roles = "Administrator")]
+    //[Authorize(Roles = "Administrator")]
     public class RoleController : Controller
     {
         private ApplicationDbContext _ctx;
