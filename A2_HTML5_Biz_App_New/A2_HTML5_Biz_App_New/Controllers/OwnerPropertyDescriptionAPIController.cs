@@ -106,6 +106,7 @@ namespace A2_HTML5_Biz_App_New.Controllers
                 return BadRequest(ModelState);
             }
 
+            ownerPropertyDescription.RegistrationDate = DateTime.Now;
             db.OwnerPropertyDescriptions.Add(ownerPropertyDescription);
             db.SaveChanges();
 
